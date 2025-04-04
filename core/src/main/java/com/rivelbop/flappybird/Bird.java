@@ -2,6 +2,7 @@ package com.rivelbop.flappybird;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Sound; // CHALLENGE
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.utils.Disposable;
@@ -12,6 +13,9 @@ public class Bird implements Disposable {
         GRAVITY = -900f, // Constant downward acceleration
         FLAP_FORCE = 450f; // Value to set velocity to when the bird flaps
     private float velocity; // Keeps track of the bird's current velocity to apply
+
+    // CHALLENGE: Flap sound effect
+    private final Sound FLAP_SOUND = Gdx.audio.newSound(Gdx.files.internal("flap.ogg"));
 
     // Stores the position and texture of the bird
     public final Sprite SPRITE = new Sprite(new Texture("bird.png"));
@@ -26,6 +30,7 @@ public class Bird implements Disposable {
         if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
             Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
             velocity = FLAP_FORCE;
+            FLAP_SOUND.play(); // CHALLENGE
         }
 
         // Apply gravity to the sprite
@@ -36,7 +41,7 @@ public class Bird implements Disposable {
 
     @Override
     public void dispose() {
-        // Dispose of the texture created for the sprite
-        SPRITE.getTexture().dispose();
+        SPRITE.getTexture().dispose(); // Dispose of the texture created for the sprite
+        FLAP_SOUND.dispose(); // CHALLENGE
     }
 }

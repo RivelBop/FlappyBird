@@ -16,7 +16,7 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 public class FlappyBird extends ApplicationAdapter {
     /* Window */
     // Create a 9/16 aspect ratio (similar to a mobile device)
-    public static int WIDTH = 480, HEIGHT = WIDTH * 16/9;
+    public static int WIDTH = 480, HEIGHT = WIDTH * 16 / 9;
     // Keeps the screen within a certain resolution (fits within black bars when necessary)
     private final FitViewport VIEWPORT = new FitViewport(WIDTH, HEIGHT);
 
@@ -26,12 +26,18 @@ public class FlappyBird extends ApplicationAdapter {
 
     /* Game Elements */
     private Bird bird;
+    private PipeGroup pipes1, pipes2;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
+
         // Create the bird on the left side of the screen and above the half-way y-pos to avoid logo sprite obstruction
         bird = new Bird(WIDTH / 4f, HEIGHT / 2f + 100f);
+
+        // Create pipes off-screen
+        pipes1 = new PipeGroup(WIDTH);
+        pipes2 = new PipeGroup(WIDTH * 2f);
     }
 
     @Override
@@ -42,6 +48,15 @@ public class FlappyBird extends ApplicationAdapter {
         /* Update Logic */
         bird.update();
 
+        if (pipes1.update()) { // Update first pipe group until it reaches the side of the screen
+            pipes1.dispose(); // Dispose of the textures stored in the group
+            pipes1 = new PipeGroup(WIDTH * 2f - (WIDTH - pipes2.getX())); // Create a new group on the right
+        }
+        if (pipes2.update()) {
+            pipes2.dispose();
+            pipes2 = new PipeGroup(WIDTH * 2f - (WIDTH - pipes1.getX()));
+        }
+
         /* Render */
         // Apply the viewport to the camera and set the viewport to use for rendering
         VIEWPORT.apply(true);
@@ -49,6 +64,9 @@ public class FlappyBird extends ApplicationAdapter {
         batch.setProjectionMatrix(VIEWPORT.getCamera().combined);
         // Draw textures, sprites, etc.
         batch.begin();
+        // Use the render methods to draw both pipes (top and bottom) at once per PipeGroup
+        pipes1.render(batch);
+        pipes2.render(batch);
         // Use the sprite to draw the bird
         bird.SPRITE.draw(batch);
         batch.end();
@@ -62,6 +80,8 @@ public class FlappyBird extends ApplicationAdapter {
 
     @Override
     public void dispose() {
+        pipes2.dispose();
+        pipes1.dispose();
         bird.dispose();
         batch.dispose();
     }
