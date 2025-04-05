@@ -11,9 +11,11 @@ A Flappy Bird clone made with libGDX.
 * Background (with Moving Base on Bottom)
 
 ## Assets
-These assets are not mine, they are from the original Flabby Bird game and are taken from the source provided below.
+These assets are not mine, they are from the original Flabby Bird game and are taken from the sources provided below.
 
-Source: [flappy-bird-assets](https://github.com/samuelcust/flappy-bird-assets)
+Textures/Audio Source: [flappy-bird-assets](https://github.com/samuelcust/flappy-bird-assets)
+
+Font Source: [flappy-font.ttf](https://github.com/paulkr/Flappy-Bird/blob/master/lib/res/fonts/flappy-font.ttf)
 
 ## Full Udemy Course
 Used to teach libGDX game development:

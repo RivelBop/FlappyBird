@@ -2,9 +2,13 @@ package com.rivelbop.flappybird;
 
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
 
@@ -25,15 +29,36 @@ public class FlappyBird extends ApplicationAdapter {
     /* Visuals */
     // Renderer that is optimized and used to draw textures/sprites
     private SpriteBatch batch;
+    // Flappy Bird Font (used to display score)
+    private BitmapFont font;
+    // Used to render scores using the BitmapFont
+    private GlyphLayout scoreLayout, highScoreLayout;
 
     /* Game Elements */
     private Sound scoreSound; // Sound that plays when player scores
     private Bird bird;
     private PipeGroup pipes1, pipes2;
 
+    /* Score */
+    private Preferences saveData; // Used to access save data
+    private int
+        highScore,
+        score; // Keeps track of the player's score
+
     @Override
     public void create() {
         batch = new SpriteBatch();
+
+        // Load font through generator
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("font.ttf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter.size = 64;
+        font = generator.generateFont(parameter);
+        generator.dispose(); // After font generation, generator is no longer necessary
+
+        scoreLayout = new GlyphLayout();
+        highScoreLayout = new GlyphLayout();
+
         scoreSound = Gdx.audio.newSound(Gdx.files.internal("score.ogg"));
 
         // Create the bird on the left side of the screen and above the half-way y-pos to avoid logo sprite obstruction
@@ -42,6 +67,10 @@ public class FlappyBird extends ApplicationAdapter {
         // Create pipes off-screen
         pipes1 = new PipeGroup(WIDTH);
         pipes2 = new PipeGroup(WIDTH * 2f);
+
+        saveData = Gdx.app.getPreferences("FlappyBird"); // Get save file
+        highScore = saveData.getInteger("highScore", 0); // Get high score
+        score = 0; // Reset the score
     }
 
     @Override
@@ -52,6 +81,10 @@ public class FlappyBird extends ApplicationAdapter {
         /* Update Logic */
         // If the bird touches the bottom of the screen or collides with any pipe
         if (bird.SPRITE.getY() <= 0f || pipes1.collides(bird) || pipes2.collides(bird)) {
+            if (score > highScore) { // If the current score is greater than the saved high score
+                saveData.putInteger("highScore", score); // Save the score as the high score
+            }
+
             // Restart the game
             dispose();
             create();
@@ -67,10 +100,17 @@ public class FlappyBird extends ApplicationAdapter {
             pipes2 = new PipeGroup(WIDTH * 2f - (WIDTH - pipes1.getX()));
         }
 
-        // If the player scores, play the score sound effect
+        // If the player scores, increase score count and play the score sound effect
         if (pipes1.hasScored(bird) || pipes2.hasScored(bird)) {
+            score++;
             scoreSound.play();
         }
+
+        font.setColor(Color.WHITE);
+        scoreLayout.setText(font, Integer.toString(score)); // Prepare the glyph for score rendering
+
+        font.setColor(Color.GREEN);
+        highScoreLayout.setText(font, Integer.toString(highScore));
 
         /* Render */
         // Apply the viewport to the camera and set the viewport to use for rendering
@@ -79,11 +119,21 @@ public class FlappyBird extends ApplicationAdapter {
         batch.setProjectionMatrix(VIEWPORT.getCamera().combined);
         // Draw textures, sprites, etc.
         batch.begin();
+
         // Use the render methods to draw both pipes (top and bottom) at once per PipeGroup
         pipes1.render(batch);
         pipes2.render(batch);
+
         // Use the sprite to draw the bird
         bird.SPRITE.draw(batch);
+
+        // Render the score in the center-top of the screen
+        font.draw(batch, scoreLayout, WIDTH / 2f - scoreLayout.width / 2f, HEIGHT - 50f);
+
+        // Render the high score under the score
+        font.draw(batch, highScoreLayout,
+            WIDTH / 2f - highScoreLayout.width / 2f, HEIGHT - scoreLayout.height - 75f);
+
         batch.end();
     }
 
@@ -95,10 +145,15 @@ public class FlappyBird extends ApplicationAdapter {
 
     @Override
     public void dispose() {
+        saveData.flush(); // Must be flushed to finish saving data
+
         pipes2.dispose();
         pipes1.dispose();
         bird.dispose();
+
         scoreSound.dispose();
+
+        font.dispose();
         batch.dispose();
     }
 }
