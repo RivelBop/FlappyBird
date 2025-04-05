@@ -1,6 +1,8 @@
 package com.rivelbop.flappybird;
 
 import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -25,12 +27,14 @@ public class FlappyBird extends ApplicationAdapter {
     private SpriteBatch batch;
 
     /* Game Elements */
+    private Sound scoreSound; // Sound that plays when player scores
     private Bird bird;
     private PipeGroup pipes1, pipes2;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
+        scoreSound = Gdx.audio.newSound(Gdx.files.internal("score.ogg"));
 
         // Create the bird on the left side of the screen and above the half-way y-pos to avoid logo sprite obstruction
         bird = new Bird(WIDTH / 4f, HEIGHT / 2f + 100f);
@@ -46,8 +50,14 @@ public class FlappyBird extends ApplicationAdapter {
         ScreenUtils.clear(Color.BLACK);
 
         /* Update Logic */
-        bird.update();
+        // If the bird touches the bottom of the screen or collides with any pipe
+        if (bird.SPRITE.getY() <= 0f || pipes1.collides(bird) || pipes2.collides(bird)) {
+            // Restart the game
+            dispose();
+            create();
+        }
 
+        bird.update();
         if (pipes1.update()) { // Update first pipe group until it reaches the side of the screen
             pipes1.dispose(); // Dispose of the textures stored in the group
             pipes1 = new PipeGroup(WIDTH * 2f - (WIDTH - pipes2.getX())); // Create a new group on the right
@@ -55,6 +65,11 @@ public class FlappyBird extends ApplicationAdapter {
         if (pipes2.update()) {
             pipes2.dispose();
             pipes2 = new PipeGroup(WIDTH * 2f - (WIDTH - pipes1.getX()));
+        }
+
+        // If the player scores, play the score sound effect
+        if (pipes1.hasScored(bird) || pipes2.hasScored(bird)) {
+            scoreSound.play();
         }
 
         /* Render */
@@ -83,6 +98,7 @@ public class FlappyBird extends ApplicationAdapter {
         pipes2.dispose();
         pipes1.dispose();
         bird.dispose();
+        scoreSound.dispose();
         batch.dispose();
     }
 }

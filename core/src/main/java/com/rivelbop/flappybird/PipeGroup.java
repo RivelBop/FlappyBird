@@ -3,6 +3,7 @@ package com.rivelbop.flappybird;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Disposable;
 
 /**
@@ -13,6 +14,7 @@ public class PipeGroup implements Disposable {
         BOTTOM = new Pipe(false),
         TOP = new Pipe(true); // Since pipe texture is facing up, must be flipped to face down
     private final float SPEED = -250f;
+    private boolean hasScored; // Flag that prevents additional scores if the pipe has already been scored on
 
     /**
      * Creates a pipe-group at position x.
@@ -46,6 +48,32 @@ public class PipeGroup implements Disposable {
 
         // Checks if pipes are off-screen
         return BOTTOM.SPRITE.getX() < -BOTTOM.SPRITE.getBoundingRectangle().width;
+    }
+
+    /**
+     * Checks if the bird overlaps with the top or bottom pipe.
+     *
+     * @param bird The bird to check collisions for.
+     * @return Whether the bird overlaps the pipe group (any of the two pipes).
+     */
+    public boolean collides(Bird bird) {
+        Rectangle pBox = bird.SPRITE.getBoundingRectangle();
+        return pBox.overlaps(BOTTOM.SPRITE.getBoundingRectangle()) || pBox.overlaps(TOP.SPRITE.getBoundingRectangle());
+    }
+
+    /**
+     * Checks to see if the bird passes the pipe to determine if the pipe is scored.
+     * This will only return true once (after the initial pipe pass) to avoid constant scoring.
+     *
+     * @param bird The bird to check position.
+     * @return Whether the bird has passed the pipe and scored.
+     */
+    public boolean hasScored(Bird bird) {
+        if (!hasScored && bird.SPRITE.getX() > getX() + BOTTOM.SPRITE.getWidth() / 2f) {
+            hasScored = true;
+            return true;
+        }
+        return false;
     }
 
     /**
