@@ -36,15 +36,17 @@ public class Bird implements Disposable {
     // Stores the position and texture of the bird
     public final Sprite SPRITE = new Sprite(ANIMATION.getKeyFrame(stateTime));
 
+    public boolean isDead; // Keep track of bird's death
+
     public Bird(float x, float y) {
         SPRITE.setScale(2f); // The texture is too small, double the size of the sprite
         SPRITE.setCenter(x, y);
     }
 
     public void update() {
-        // Flap when the player presses SPACE or LEFT_MOUSE
-        if (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
-            Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+        // Flap when the bird isn't dead and presses SPACE or LEFT_MOUSE
+        if (!isDead && (Gdx.input.isKeyJustPressed(Input.Keys.SPACE) ||
+            Gdx.input.isButtonJustPressed(Input.Buttons.LEFT))) {
             velocity = FLAP_FORCE;
             FLAP_SOUND.play();
         }
@@ -80,6 +82,15 @@ public class Bird implements Disposable {
             }
         }
         // Update the sprite's texture to the frame provided by the animation and state time
+        SPRITE.setTexture(ANIMATION.getKeyFrame(stateTime));
+    }
+
+    /**
+     * Updates the bird's animation.
+     * Should only be used before the game is started (when the start menu is displayed).
+     */
+    public void updateAnimation() {
+        stateTime += Gdx.graphics.getDeltaTime();
         SPRITE.setTexture(ANIMATION.getKeyFrame(stateTime));
     }
 
