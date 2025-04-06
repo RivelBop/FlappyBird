@@ -5,8 +5,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Preferences;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
+import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.utils.ScreenUtils;
@@ -33,9 +35,12 @@ public class FlappyBird extends ApplicationAdapter {
     private BitmapFont font;
     // Used to render scores using the BitmapFont
     private GlyphLayout scoreLayout, highScoreLayout;
+    // City backdrop
+    private Sprite background;
 
     /* Game Elements */
     private Sound scoreSound; // Sound that plays when player scores
+    private Ground ground;
     private Bird bird;
     private PipeGroup pipes1, pipes2;
 
@@ -61,6 +66,11 @@ public class FlappyBird extends ApplicationAdapter {
 
         scoreSound = Gdx.audio.newSound(Gdx.files.internal("score.ogg"));
 
+        ground = new Ground();
+        background = new Sprite(new Texture("background.png"));
+        background.setScale(2.35f); // Fills up the whole screen
+        background.setY(ground.topY()); // Set the background on top of the ground sprite
+
         // Create the bird on the left side of the screen and above the half-way y-pos to avoid logo sprite obstruction
         bird = new Bird(WIDTH / 4f, HEIGHT / 2f + 100f);
 
@@ -79,8 +89,8 @@ public class FlappyBird extends ApplicationAdapter {
         ScreenUtils.clear(Color.BLACK);
 
         /* Update Logic */
-        // If the bird touches the bottom of the screen or collides with any pipe
-        if (bird.SPRITE.getY() <= 0f || pipes1.collides(bird) || pipes2.collides(bird)) {
+        // If the bird touches the ground or collides with any pipe
+        if (bird.SPRITE.getY() <= ground.topY() || pipes1.collides(bird) || pipes2.collides(bird)) {
             if (score > highScore) { // If the current score is greater than the saved high score
                 saveData.putInteger("highScore", score); // Save the score as the high score
             }
@@ -90,6 +100,7 @@ public class FlappyBird extends ApplicationAdapter {
             create();
         }
 
+        ground.update();
         bird.update();
         if (pipes1.update()) { // Update first pipe group until it reaches the side of the screen
             pipes1.dispose(); // Dispose of the textures stored in the group
@@ -120,12 +131,16 @@ public class FlappyBird extends ApplicationAdapter {
         // Draw textures, sprites, etc.
         batch.begin();
 
+        background.draw(batch);
+
         // Use the render methods to draw both pipes (top and bottom) at once per PipeGroup
         pipes1.render(batch);
         pipes2.render(batch);
 
         // Use the sprite to draw the bird
         bird.SPRITE.draw(batch);
+
+        ground.render(batch);
 
         // Render the score in the center-top of the screen
         font.draw(batch, scoreLayout, WIDTH / 2f - scoreLayout.width / 2f, HEIGHT - 50f);
@@ -150,6 +165,9 @@ public class FlappyBird extends ApplicationAdapter {
         pipes2.dispose();
         pipes1.dispose();
         bird.dispose();
+
+        ground.dispose();
+        background.getTexture().dispose();
 
         scoreSound.dispose();
 
